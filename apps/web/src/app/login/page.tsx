@@ -1,4 +1,5 @@
 import { login, loginWithGoogle, signupDev } from "./actions";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { Button } from "@superapp/ui";
 import Link from "next/link";
 
@@ -8,6 +9,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  const isConfigured = isSupabaseConfigured();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4 py-8">
@@ -24,11 +26,12 @@ export default async function LoginPage({
           </p>
         </div>
 
-        {error === "config_missing" && (
+        {!isConfigured && (
           <div className="mb-6 p-3 bg-amber-50 text-amber-800 text-xs rounded border border-amber-200">
-            <strong>Pemberitahuan Sistem:</strong> Kredensial Supabase belum dikonfigurasi di Environment Variables. Silakan lengkapi pengaturan di file <code>.env.local</code>.
+            <strong>Pemberitahuan Sistem:</strong> Kredensial Supabase belum terdeteksi aktif di server ini. Pastikan Environment Variables di Vercel sudah disimpan dan dilakukan <strong>Redeploy</strong>.
           </div>
         )}
+
         {error === "account_locked" && (
           <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
             <strong>Akses Ditolak:</strong> Akun Anda berstatus Guest/Terkunci. Hubungi Superadmin.
