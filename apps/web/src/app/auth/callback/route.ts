@@ -1,4 +1,4 @@
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { createServerSupabase, getSiteUrl, isSupabaseConfigured } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 interface RbacRow {
@@ -7,12 +7,25 @@ interface RbacRow {
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const explicitNext = searchParams.get("next");
+  const errorParam = searchParams.get("error");
+  const errorDescription = searchParams.get("error_description");
+
+  const siteUrl = getSiteUrl();
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(`${origin}/login?error=config_missing`);
+    return NextResponse.redirect(`${siteUrl}/login?error=config_missing`);
+  }
+
+  // Jika penyedia OAuth (Google / Supabase) mengembalikan pesan error langsung
+  if (errorParam || errorDescription) {
+    const errorMsg = errorDescription || errorParam || "oauth_error";
+    console.error("OAuth error received at callback:", errorMsg);
+    return NextResponse.redirect(
+      `${siteUrl}/login?error=${encodeURIComponent(errorMsg)}`
+    );
   }
 
   if (code) {
@@ -22,7 +35,7 @@ export async function GET(request: Request) {
 
       if (!error) {
         if (explicitNext) {
-          return NextResponse.redirect(`${origin}${explicitNext}`);
+          return NextResponse.redirect(`${siteUrl}${explicitNext}`);
         }
 
         // Smart Auth Routing: Cek apakah user memiliki role admin
@@ -41,7 +54,7 @@ export async function GET(request: Request) {
             const isActive = rbacData && rbacData[0]?.is_active;
 
             if (role && isActive) {
-              return NextResponse.redirect(`${origin}/admin`);
+              return NextResponse.redirect(`${siteUrl}/admin`);
             }
           } catch {
             // Abaikan jika RPC belum ada
@@ -49,13 +62,18 @@ export async function GET(request: Request) {
         }
 
         // Default redirect untuk Tamu/Masyarakat
-        return NextResponse.redirect(`${origin}/akun`);
+        return NextResponse.redirect(`${siteUrl}/akun`);
+      } else {
+        console.error("Supabase exchangeCodeForSession error:", error.message);
+        return NextResponse.redirect(
+          `${siteUrl}/login?error=${encodeURIComponent(error.message)}`
+        );
       }
     } catch (err) {
-      console.error("Error in auth callback:", err);
+      console.error("Error in auth callback execution:", err);
     }
   }
 
   // Jika gagal, kembalikan ke login dengan pesan error
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  return NextResponse.redirect(`${siteUrl}/login?error=auth_callback_failed`);
 }

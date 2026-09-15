@@ -48,6 +48,20 @@ export function getSupabaseSecretKey(): string {
   return secret;
 }
 
+export function getSiteUrl(): string {
+  let siteUrl = cleanEnvValue(
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL
+  );
+  if (!siteUrl) {
+    return "https://super-app-web-gray.vercel.app";
+  }
+  // Hilangkan trailing slash jika ada
+  if (siteUrl.endsWith("/")) {
+    siteUrl = siteUrl.slice(0, -1);
+  }
+  return siteUrl;
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = getSupabaseUrl();
   const key = getSupabasePublishableKey();

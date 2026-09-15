@@ -11,6 +11,13 @@ export default async function LoginPage({
   const { error } = await searchParams;
   const isConfigured = isSupabaseConfigured();
 
+  const isCustomError =
+    error &&
+    error !== "config_missing" &&
+    error !== "account_locked" &&
+    error !== "invalid_credentials" &&
+    error !== "auth_callback_failed";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4 py-8">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 w-full max-w-md">
@@ -45,6 +52,11 @@ export default async function LoginPage({
         {error === "auth_callback_failed" && (
           <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
             Autentikasi gagal atau dibatalkan.
+          </div>
+        )}
+        {isCustomError && (
+          <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200 break-words">
+            <strong>Info Autentikasi:</strong> {error}
           </div>
         )}
 

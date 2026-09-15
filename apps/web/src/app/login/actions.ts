@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { createServerSupabase, getSiteUrl, isSupabaseConfigured } from "@/lib/supabase";
 import { LoginSchema } from "@superapp/validations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -66,7 +66,7 @@ export async function loginWithGoogle() {
   }
 
   const supabase = await createServerSupabase();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const origin = getSiteUrl();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -76,7 +76,8 @@ export async function loginWithGoogle() {
   });
 
   if (error || !data.url) {
-    redirect("/login?error=auth_callback_failed");
+    const errorMsg = error?.message || "auth_callback_failed";
+    redirect(`/login?error=${encodeURIComponent(errorMsg)}`);
   }
 
   redirect(data.url);
