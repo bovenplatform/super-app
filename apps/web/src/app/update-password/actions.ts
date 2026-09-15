@@ -1,5 +1,5 @@
 "use server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
 
 export async function updatePassword(formData: FormData) {
@@ -10,7 +10,7 @@ export async function updatePassword(formData: FormData) {
     redirect("/update-password?error=mismatch");
   }
 
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
@@ -20,3 +20,4 @@ export async function updatePassword(formData: FormData) {
   // Sukses ubah password, arahkan ke dasbor
   redirect("/admin");
 }
+

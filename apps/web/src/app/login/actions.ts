@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase";
 
 export async function login(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -23,7 +23,7 @@ export async function login(formData: FormData) {
 }
 
 export async function loginWithGoogle() {
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -40,7 +40,7 @@ export async function loginWithGoogle() {
 
 export async function signupDev() {
   // HANYA UNTUK KEPERLUAN TES DEVELOPER
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const randomNum = Math.floor(Math.random() * 1000);
   const email = `test${randomNum}@dev.com`;
   const password = "password123";
@@ -56,3 +56,4 @@ export async function signupDev() {
   await supabase.auth.signInWithPassword({ email, password });
   redirect("/admin");
 }
+

@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
           });
           supabaseResponse.cookies.set({
             name,
-            value,
+            value: "",
             ...options,
           });
         },

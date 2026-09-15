@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/admin";
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createServerSupabase();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
@@ -18,3 +18,4 @@ export async function GET(request: Request) {
   // Jika gagal, kembalikan ke login dengan pesan error
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }
+

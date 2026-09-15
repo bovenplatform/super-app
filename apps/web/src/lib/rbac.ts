@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
 
 export async function guardAdminPage(requiredPermission?: string) {
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -10,11 +10,11 @@ export async function guardAdminPage(requiredPermission?: string) {
   }
 
   // LAPIS 2: Pengecekan Profil Admin & Role
-  const { data: adminProfile } = await supabase
+  const { data: adminProfile } = (await supabase
     .from("admin_users")
     .select("role_id, is_active")
     .eq("id", user.id)
-    .single();
+    .single()) as unknown as { data: { role_id: string | null; is_active: boolean } | null };
 
   // Jika profil tidak ada atau dikunci (Auto-Guest Lockdown)
   if (!adminProfile || !adminProfile.is_active) {
@@ -23,6 +23,7 @@ export async function guardAdminPage(requiredPermission?: string) {
 
   // Jika ada spesifik permission yang dicek
   if (requiredPermission) {
+    // @ts-expect-error - RPC types resolved post-codegen
     const { data: hasPerm } = await supabase.rpc("has_permission", { required_action: requiredPermission });
     if (!hasPerm) {
       redirect("/admin?error=forbidden");
@@ -31,3 +32,4 @@ export async function guardAdminPage(requiredPermission?: string) {
 
   return { user, adminProfile };
 }
+

@@ -1,10 +1,10 @@
 "use server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase";
 import { redirect } from "next/navigation";
 
 export async function resetPassword(formData: FormData) {
   const email = formData.get("email") as string;
-  const supabase = createClient();
+  const supabase = await createServerSupabase();
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -16,3 +16,4 @@ export async function resetPassword(formData: FormData) {
   }
   redirect("/reset-password?message=success");
 }
+
