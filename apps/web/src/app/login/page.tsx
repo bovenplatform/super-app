@@ -1,4 +1,5 @@
-import { login, loginWithGoogle, signupDev } from "./actions";
+import { login, signupDev } from "./actions";
+import { GoogleLoginButton } from "./GoogleLoginButton";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { Button } from "@superapp/ui";
 import Link from "next/link";
@@ -112,15 +113,8 @@ export default async function LoginPage({
           </div>
         </div>
 
-        {/* Login Google */}
-        <form action={loginWithGoogle}>
-          <Button
-            type="submit"
-            className="w-full bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 dark:bg-slate-700 dark:text-white dark:border-slate-600 dark:hover:bg-slate-600"
-          >
-            Google Account
-          </Button>
-        </form>
+        {/* Login Google dengan Client-Side PKCE */}
+        <GoogleLoginButton />
 
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
           <p className="text-xs text-slate-500 text-center mb-3">
