@@ -3,24 +3,61 @@
 @tailwind utilities;
 
 :root {
-  --c-background: #FBF9F4;
-  --c-surface: #FFFFFF;
+  /* Surfaces & Backgrounds */
+  --bg-app: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F1F5F9;
+
+  /* Typography & Borders */
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border-color: #E2E8F0;
+
+  /* Rebrandable Brand Colors (Default: Emerald & Gold) */
+  --primary: #004229;
+  --primary-hover: #002E1C;
+  --primary-fg: #FFFFFF;
+  --accent: #D4AF37;
+  --accent-fg: #1E293B;
+
+  /* Semantic Feedback Tokens */
+  --success: #10B981;
+  --success-fg: #FFFFFF;
+  --warning: #F59E0B;
+  --warning-fg: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-fg: #FFFFFF;
+  --ring: rgba(0, 66, 41, 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --c-background: #051808;
-    --c-surface: #08240e;
+    --bg-app: #0B130E;
+    --bg-surface: #111D15;
+    --bg-subtle: #18281E;
+
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-color: #1E3326;
+
+    --primary: #059669;
+    --primary-hover: #10B981;
+    --primary-fg: #FFFFFF;
+    --accent: #E5C158;
+    --accent-fg: #0F172A;
+
+    --success: #10B981;
+    --success-fg: #FFFFFF;
+    --warning: #F59E0B;
+    --warning-fg: #FFFFFF;
+    --destructive: #F87171;
+    --destructive-fg: #FFFFFF;
+    --ring: rgba(5, 150, 105, 0.4);
   }
 }
 
 body {
-  background-color: var(--c-background);
-  color: #111;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    color: #eee;
-  }
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }

@@ -1,6 +1,6 @@
 import { getRbacUser } from "@/lib/rbac";
 import { createServerSupabase } from "@/lib/supabase";
-import { Button } from "@superapp/ui";
+import { Badge, Button, Card, PageHeader } from "@superapp/ui";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -31,120 +31,106 @@ export default async function AkunPortalPage({
   const isActive = user?.isActive ?? false;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <Link
-              href="/"
-              className="text-sm font-medium text-brand-emerald dark:text-emerald-400 hover:underline"
-            >
-              ← Kembali ke Beranda
-            </Link>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mt-2">
-              Portal Akun & Profil
-            </h1>
-          </div>
-
+    <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+      {/* 1. Page Header */}
+      <PageHeader
+        title="Portal Akun & Profil"
+        description="Kelola informasi akun Anda, pengaturan kata sandi, dan akses ke layanan terpadu."
+        backHref="/"
+        backLabel="Kembali ke Beranda"
+        action={
           <form action="/login/logout" method="POST">
-            <Button
-              type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Keluar
+            <Button type="submit" variant="destructive" size="sm">
+              Keluar Sesi
             </Button>
           </form>
+        }
+      />
+
+      {error === "account_not_active" && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 rounded-lg text-sm">
+          <strong>Pemberitahuan:</strong> Akun Anda berstatus Tamu dan belum diaktifkan sebagai Administrator oleh Superadmin.
         </div>
+      )}
 
-        {error === "account_not_active" && (
-          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-lg text-sm">
-            <strong>Pemberitahuan:</strong> Akun Anda belum memiliki hak akses Administrator atau sedang menunggu verifikasi oleh Superadmin.
+      {message === "password_updated" && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 rounded-lg text-sm">
+          Kata sandi Anda berhasil diperbarui.
+        </div>
+      )}
+
+      {/* 2. User Profile Card */}
+      <Card className="p-6 sm:p-8 space-y-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-border text-center sm:text-left">
+          <div className="h-20 w-20 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-2xl font-black uppercase shadow-sm">
+            {displayName.charAt(0)}
           </div>
-        )}
-
-        {message === "password_updated" && (
-          <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-lg text-sm">
-            Password Anda berhasil diperbarui.
-          </div>
-        )}
-
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden divide-y divide-slate-200 dark:divide-slate-700">
-          <div className="p-6 sm:p-8 flex items-center space-x-6">
-            <div className="h-20 w-20 rounded-full bg-brand-emerald text-brand-gold flex items-center justify-center text-2xl font-bold uppercase shadow">
-              {displayName.charAt(0)}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {displayName}
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {displayEmail}
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                  {roleLabel}
-                </span>
-                {user?.role && (
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      isActive
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300"
-                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300"
-                    }`}
-                  >
-                    {isActive ? "Aktif" : "Menunggu Aktivasi"}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 sm:p-8 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Menu & Aksi
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {user?.role && isActive && (
-                <Link
-                  href="/admin"
-                  className="p-4 rounded-lg border border-brand-emerald/30 bg-brand-emerald/5 hover:bg-brand-emerald/10 transition flex flex-col justify-between"
-                >
-                  <span className="font-semibold text-brand-emerald dark:text-emerald-400">
-                    Panel Admin CMS
-                  </span>
-                  <span className="text-xs text-slate-500 mt-1">
-                    Buka dasbor manajemen internal
-                  </span>
-                </Link>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-main">{displayName}</h2>
+            <p className="text-sm text-muted">{displayEmail}</p>
+            <div className="flex items-center justify-center sm:justify-start gap-2 pt-2">
+              <Badge variant={user?.role ? "brand" : "secondary"}>
+                {roleLabel}
+              </Badge>
+              {user?.role && (
+                <Badge variant={isActive ? "success" : "warning"}>
+                  {isActive ? "Aktif" : "Menunggu Aktivasi"}
+                </Badge>
               )}
-
-              <Link
-                href="/update-password"
-                className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition flex flex-col justify-between"
-              >
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  Ubah Kata Sandi
-                </span>
-                <span className="text-xs text-slate-500 mt-1">
-                  Perbarui kredensial keamanan akun
-                </span>
-              </Link>
-
-              <Link
-                href="/berita"
-                className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition flex flex-col justify-between"
-              >
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  Portal Berita
-                </span>
-                <span className="text-xs text-slate-500 mt-1">
-                  Lihat publikasi dan informasi terbaru
-                </span>
-              </Link>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Action Grid */}
+        <div className="space-y-4">
+          <h3 className="text-base font-bold text-main">Menu Akses Mandiri</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {user?.role && isActive && (
+              <Link
+                href="/admin"
+                className="p-5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="font-bold text-primary text-base">
+                    Panel Admin CMS →
+                  </div>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Masuk ke dasbor kelola berita, data, dan operasional internal.
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            <Link
+              href="/update-password"
+              className="p-5 rounded-xl border border-border hover:bg-subtle transition flex flex-col justify-between"
+            >
+              <div>
+                <div className="font-bold text-main text-base">
+                  Ubah Kata Sandi
+                </div>
+                <p className="text-xs text-muted mt-1 leading-relaxed">
+                  Perbarui password akun Anda untuk menjaga keamanan akses.
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/berita"
+              className="p-5 rounded-xl border border-border hover:bg-subtle transition flex flex-col justify-between"
+            >
+              <div>
+                <div className="font-bold text-main text-base">
+                  Portal Berita
+                </div>
+                <p className="text-xs text-muted mt-1 leading-relaxed">
+                  Jelajahi siaran pers, pengumuman, dan artikel publik.
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </Card>
     </main>
   );
 }

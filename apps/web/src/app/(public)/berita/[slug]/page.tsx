@@ -1,5 +1,6 @@
 import { createPublicSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Berita } from "@superapp/types";
+import { Badge, Card } from "@superapp/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -75,7 +76,7 @@ export default async function PublicBeritaDetailPage({
   const title = berita?.title || `Contoh Artikel Detail (${slug})`;
   const content =
     berita?.content ||
-    "Ini adalah konten artikel berita. Nantinya konten akan ditarik langsung dari database Supabase berdasarkan parameter slug yang dikirimkan.";
+    "Ini adalah konten artikel berita. Nantinya konten akan ditarik langsung dari database Supabase berdasarkan parameter slug yang dikirimkan.\n\nStruktur layout ini menggunakan standar lebar max-w-4xl (896px) yang dirancang khusus untuk kenyamanan membaca optimal (reading typography canvas), dilengkapi dengan cover featured image responsif, meta info publikasi, dan navigasi breadcrumb seragam.";
   const kategoriName =
     (berita?.kategori as unknown as { name?: string })?.name || "Pengumuman";
   const formattedDate = berita
@@ -91,31 +92,40 @@ export default async function PublicBeritaDetailPage({
   }
 
   return (
-    <main className="min-h-screen p-6 md:p-12 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <Link
-          href="/berita"
-          className="text-brand-emerald dark:text-emerald-400 hover:underline font-medium text-sm flex items-center gap-1"
-        >
-          ← Kembali ke Indeks Berita
+    <main className="min-h-screen max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+      {/* 1. Breadcrumb / Back Navigation */}
+      <nav className="flex items-center gap-2 text-xs text-muted">
+        <Link href="/" className="hover:text-primary transition">
+          Beranda
         </Link>
-      </div>
+        <span>/</span>
+        <Link href="/berita" className="hover:text-primary transition">
+          Berita
+        </Link>
+        <span>/</span>
+        <span className="text-main font-medium truncate max-w-[200px] sm:max-w-xs">
+          {title}
+        </span>
+      </nav>
 
-      <article className="bg-white dark:bg-slate-800 p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <div className="mb-8 border-b border-slate-200 dark:border-slate-700 pb-8">
-          <div className="text-xs text-brand-gold font-bold uppercase tracking-wider mb-3">
-            {kategoriName}
+      {/* 2. Reading Canvas Card */}
+      <Card className="p-6 sm:p-10 space-y-8 shadow-sm">
+        <div className="space-y-4 border-b border-border pb-6">
+          <div>
+            <Badge variant="default">{kategoriName}</Badge>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-main tracking-tight leading-tight">
             {title}
           </h1>
-          <div className="flex items-center text-xs sm:text-sm text-slate-500 gap-4">
+          <div className="flex items-center text-xs sm:text-sm text-muted gap-4">
             <span>Dipublikasikan: {formattedDate}</span>
+            <span>•</span>
+            <span>Status: Terverifikasi</span>
           </div>
         </div>
 
         {berita?.cover_image_url && (
-          <div className="mb-8 rounded-xl overflow-hidden aspect-video bg-slate-100 dark:bg-slate-700">
+          <div className="rounded-xl overflow-hidden aspect-video bg-subtle border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={berita.cover_image_url}
@@ -125,10 +135,19 @@ export default async function PublicBeritaDetailPage({
           </div>
         )}
 
-        <div className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line text-base">
+        <div className="prose prose-slate dark:prose-invert max-w-none text-main leading-relaxed whitespace-pre-line text-base sm:text-lg">
           {content}
         </div>
-      </article>
+
+        <div className="pt-8 border-t border-border flex items-center justify-between">
+          <Link
+            href="/berita"
+            className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+          >
+            ← Kembali ke Semua Berita
+          </Link>
+        </div>
+      </Card>
     </main>
   );
 }

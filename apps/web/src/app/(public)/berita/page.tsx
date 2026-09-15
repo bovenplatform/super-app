@@ -1,5 +1,6 @@
 import { createPublicSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Berita } from "@superapp/types";
+import { Badge, Button, Card, EmptyState, PageHeader } from "@superapp/ui";
 import Link from "next/link";
 
 export const revalidate = 60; // ISR 60 detik untuk performa tinggi
@@ -25,95 +26,106 @@ export default async function PublicBeritaPage() {
   }
 
   return (
-    <main className="min-h-screen p-6 md:p-12 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <Link
-            href="/"
-            className="text-xs text-brand-emerald dark:text-emerald-400 font-medium hover:underline mb-2 block"
-          >
-            ← Kembali ke Beranda
+    <main className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* 1. Standard Page Header */}
+      <PageHeader
+        title="Kabar & Publikasi Terkini"
+        description="Portal informasi resmi, pengumuman kegiatan, dan berita seputar layanan organisasi."
+        backHref="/"
+        backLabel="Kembali ke Beranda"
+        action={
+          <Link href="/admin/berita/create">
+            <Button variant="outline" size="sm">
+              + Tulis Berita (Pengurus)
+            </Button>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-            Kabar & Informasi Terkini
-          </h1>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <Link
-            href="/admin/berita/create"
-            className="text-xs text-slate-500 hover:text-brand-emerald hover:underline"
-          >
-            Tulis Berita (Khusus Pengurus) →
-          </Link>
-        </div>
-      </div>
+        }
+      />
 
+      {/* 2. Content Grid */}
       {beritaList.length === 0 ? (
         <div className="space-y-6">
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 text-center">
-            Menampilkan contoh artikel pratinjau (Belum ada berita terpublikasi di database).
-          </div>
+          <EmptyState
+            title="Belum Ada Berita Terpublikasi"
+            description="Saat ini belum ada artikel berita aktif di database. Di bawah ini ditampilkan contoh pratinjau kartu berita publik."
+            action={
+              <Link href="/admin/berita/create">
+                <Button>Mulai Tulis Berita Pertama</Button>
+              </Link>
+            }
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link
-              href="/berita/demo-artikel"
-              className="group block bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition"
-            >
-              <div className="aspect-video bg-slate-100 dark:bg-slate-700 w-full relative flex items-center justify-center text-slate-400 text-sm">
-                Cover Berita
-              </div>
-              <div className="p-6">
-                <div className="text-xs text-brand-gold font-semibold uppercase tracking-wider mb-2">
-                  Pengumuman
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link href="/berita/demo-artikel" className="group block">
+              <Card className="h-full overflow-hidden hover:shadow-md hover:border-primary/40 transition flex flex-col">
+                <div className="aspect-video bg-subtle w-full relative flex items-center justify-center text-muted text-sm overflow-hidden">
+                  Gambar Cover Berita
                 </div>
-                <h2 className="text-lg font-bold mb-2 group-hover:text-brand-emerald transition-colors text-slate-900 dark:text-white">
-                  Contoh Artikel Berita Pertama
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3">
-                  Ini adalah contoh deskripsi singkat dari artikel berita yang akan ditampilkan di portal publik.
-                </p>
-                <div className="mt-4 text-xs text-slate-400">15 Sep 2026</div>
-              </div>
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="mb-2.5">
+                      <Badge variant="default">Pengumuman</Badge>
+                    </div>
+                    <h2 className="text-lg font-bold group-hover:text-primary transition-colors text-main line-clamp-2 mb-2">
+                      Contoh Artikel Berita Pertama
+                    </h2>
+                    <p className="text-muted text-sm line-clamp-3 leading-relaxed">
+                      Ini adalah contoh deskripsi singkat dari artikel berita yang akan ditampilkan di portal publik.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs text-muted">
+                    <span>15 September 2026</span>
+                    <span className="font-semibold text-primary group-hover:underline">Baca Selengkapnya →</span>
+                  </div>
+                </div>
+              </Card>
             </Link>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {beritaList.map((berita) => {
             const kategoriName =
-              (berita.kategori as unknown as { name?: string })?.name || "Umum";
+              (berita.kategori as unknown as { name?: string })?.name || "Informasi";
             const formattedDate = new Date(berita.created_at).toLocaleDateString(
               "id-ID",
-              { day: "numeric", month: "short", year: "numeric" }
+              { day: "numeric", month: "long", year: "numeric" }
             );
 
             return (
               <Link
                 key={berita.id}
                 href={`/berita/${berita.slug}`}
-                className="group block bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition"
+                className="group block"
               >
-                <div className="aspect-video bg-slate-100 dark:bg-slate-700 w-full relative flex items-center justify-center text-slate-400 text-sm overflow-hidden">
-                  {berita.cover_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={berita.cover_image_url}
-                      alt={berita.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <span>Gambar Cover</span>
-                  )}
-                </div>
-                <div className="p-6">
-                  <div className="text-xs text-brand-gold font-semibold uppercase tracking-wider mb-2">
-                    {kategoriName}
+                <Card className="h-full overflow-hidden hover:shadow-md hover:border-primary/40 transition flex flex-col">
+                  <div className="aspect-video bg-subtle w-full relative flex items-center justify-center text-muted text-sm overflow-hidden">
+                    {berita.cover_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={berita.cover_image_url}
+                        alt={berita.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    ) : (
+                      <span>Gambar Cover</span>
+                    )}
                   </div>
-                  <h2 className="text-lg font-bold mb-2 group-hover:text-brand-emerald dark:group-hover:text-emerald-400 transition-colors text-slate-900 dark:text-white line-clamp-2">
-                    {berita.title}
-                  </h2>
-                  <div className="mt-4 text-xs text-slate-400">{formattedDate}</div>
-                </div>
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="mb-2.5">
+                        <Badge variant="default">{kategoriName}</Badge>
+                      </div>
+                      <h2 className="text-lg font-bold group-hover:text-primary transition-colors text-main line-clamp-2 mb-2 leading-snug">
+                        {berita.title}
+                      </h2>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs text-muted">
+                      <span>{formattedDate}</span>
+                      <span className="font-semibold text-primary group-hover:underline">Baca Selengkapnya →</span>
+                    </div>
+                  </div>
+                </Card>
               </Link>
             );
           })}

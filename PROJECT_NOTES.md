@@ -2,17 +2,35 @@
 
 File ini digunakan untuk mencatat *checklist* fitur, kendala (bugs/issues) yang ditemukan selama masa pengembangan, beserta solusi teknis yang telah diterapkan agar tidak terjadi pengulangan kesalahan (regresi).
 
-## 🗂️ Checklist Scaffolding & Audit Hardening
-- [x] Inisiasi direktori utama.
-- [x] Inisiasi Turborepo dan Pnpm Workspace.
+---
+
+## 🎨 Master Plan & Standar Desain Seragam (Design System)
+
+### 1. Prinsip Utama
+- **Zero Hardcoded Colors**: Semua warna menggunakan semantic tokens CSS Variables (`var(--primary)`, `var(--bg-app)`, `var(--bg-surface)`, `var(--border-color)`). Rebranding klien hanya membutuhkan pergantian nilai di `globals.css`.
+- **Keseragaman Antar Modul**: Seluruh modul backend/admin (Berita, User Management, Surat, Inventaris) wajib mengikuti layout blueprint yang sama (`PageHeader` -> `Card Filter/Search` -> `DataTable` -> `Pagination`).
+- **Pemisahan Kumpulan Data vs Detail Data**:
+  - Halaman Kumpulan Data Publik (Berita, Program): `max-w-7xl` dengan 3-Kolom Card Grid.
+  - Halaman Detail Data Publik (Baca Berita, Profil): `max-w-4xl` dengan Single Column Reading Canvas.
+  - Halaman Admin Listing (Tabel): `max-w-7xl` dengan responsive table & action bar.
+  - Halaman Admin Form (Create/Edit): `max-w-4xl` dengan Card Form Grid & bottom action buttons.
+
+---
+
+## 🗂️ Checklist Scaffolding & Implementation
+- [x] Inisiasi direktori utama & Turborepo Monorepo.
 - [x] Pembuatan `packages/ui`, `config`, `utils`, `types`, `validations`.
 - [x] Konfigurasi Next.js App Router di `apps/web`.
 - [x] Pembuatan struktur rute `(public)`, `admin`, dan `akun` (Guest Portal).
 - [x] Seting Supabase & Migrasi Penguatan RLS (`0004_security_hardening.sql`).
-- [x] Konfigurasi Tailwind + Dark Mode via CSS variables.
 - [x] Standardisasi Supabase 4-Tier Client Architecture & Dual API Keys (2026+).
 - [x] Konfigurasi Pipeline Monorepo (Turbo Typecheck & ESLint across all packages).
 - [x] SEO (Robots, Sitemap, Metadata) & PWA Web App Manifest.
+- [x] **Tahap 1 (Design Tokens)**: Semantic CSS Variables & Tailwind Theme Mapping.
+- [ ] **Tahap 2 (UI Toolkit)**: PageHeader, DataTable, Pagination, FormField, Select, Checkbox, EmptyState di `@superapp/ui`.
+- [ ] **Tahap 3 (Public Layout)**: Refactor Kumpulan Berita vs Detail Berita sesuai standar lebar.
+- [ ] **Tahap 4 (Admin Layout & User Management)**: Refactor Admin Berita & Implementasi Admin User Management (`/admin/users`).
+- [ ] **Tahap 5 (Verifikasi & Push)**: Typecheck, Build, Lint, dan Commit ke GitHub.
 
 ---
 
@@ -28,13 +46,16 @@ File ini digunakan untuk mencatat *checklist* fitur, kendala (bugs/issues) yang 
 * **Tanggal Penyelesaian**: 15 September 2026.
 
 ### Isu 2: Online Crash (500 Server Exception) di Vercel (Digest: 452269709)
-* **Gejala / Kendala**: Halaman `/admin` di production Vercel (`https://super-app-web-gray.vercel.app/admin`) mengalami error 500 unhandled server exception.
-* **Penyebab Akar (Root Cause)**:
-  1. `guardAdminPage()` dan Supabase middleware memanggil `supabase.auth.getUser()` tanpa penanganan error (try/catch) dan tanpa validasi kesiapan URL/kredensial Supabase.
-  2. Saat environment variable belum disinkronkan di Vercel atau bernilai default `http://localhost:3000`, pemanggilan `fetch` jaringan di serverless runtime gagal fatal (`TypeError: fetch failed`) dan melempar *unhandled exception*.
-  3. OAuth callback langsung mengarahkan pengguna ke `/admin` tanpa mengecek role user, sehingga memicu *account locked* dan error redirect loop.
+* **Gejala / Kendala**: Halaman `/admin` di production Vercel mengalami error 500 unhandled server exception.
 * **Solusi Diterapkan**:
-  1. Dibuat helper `apps/web/src/lib/supabase/env.ts` untuk validasi `isSupabaseConfigured()`, normalisasi URL, dan fallback dual key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
-  2. Dibungkus seluruh pemanggilan auth di `guardAdminPage()`, `getRbacUser()`, dan middleware ke dalam blok `try...catch` yang mengalihkan user secara aman ke `/login` atau `/akun` tanpa memicu crash server 500.
-  3. Disediakan portal khusus tamu `/akun` (*Smart Auth Routing*) sehingga pengguna non-admin dialihkan ke portal publik yang aman.
+  - Dibuat helper `apps/web/src/lib/supabase/env.ts` untuk normalisasi URL & dual API key.
+  - Seluruh pemanggilan auth dibungkus blok `try...catch` tahan-gagal (*fail-safe*).
+  - Disediakan portal khusus tamu `/akun` (*Smart Auth Routing*).
+* **Tanggal Penyelesaian**: 15 September 2026.
+
+### Isu 3: PKCE Code Verifier Not Found in Storage
+* **Gejala / Kendala**: Login Google memunculkan error *"PKCE code verifier not found in storage"*.
+* **Solusi Diterapkan**:
+  - Memindahkan inisiasi OAuth ke Client-Side (`GoogleLoginButton.tsx`) memanggil `getSupabaseBrowser().auth.signInWithOAuth(...)`.
+  - Menerapkan *Dual-Cookie Adapter Compatibility* (`get`, `set`, `remove` & `getAll`, `setAll`) pada server Supabase client.
 * **Tanggal Penyelesaian**: 15 September 2026.

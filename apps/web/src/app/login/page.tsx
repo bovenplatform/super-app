@@ -1,7 +1,7 @@
 import { login, signupDev } from "./actions";
 import { GoogleLoginButton } from "./GoogleLoginButton";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { Button } from "@superapp/ui";
+import { Button, Card, FormField, Input } from "@superapp/ui";
 import Link from "next/link";
 
 export default async function LoginPage({
@@ -20,94 +20,92 @@ export default async function LoginPage({
     error !== "auth_callback_failed";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4 py-8">
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="text-xs text-slate-500 hover:underline block mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-app px-4 py-8">
+      <Card className="p-8 shadow-lg w-full max-w-md space-y-6">
+        <div className="text-center space-y-1">
+          <Link href="/" className="text-xs font-semibold text-primary hover:underline block mb-2">
             ← Kembali ke Beranda
           </Link>
-          <h1 className="text-2xl font-bold text-brand-emerald dark:text-emerald-400">
+          <h1 className="text-2xl font-extrabold text-main">
             Login Portal
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted">
             Masuk ke dasbor manajemen atau portal pengguna
           </p>
         </div>
 
         {!isConfigured && (
-          <div className="mb-6 p-3 bg-amber-50 text-amber-800 text-xs rounded border border-amber-200">
+          <div className="p-3 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs rounded-lg border border-amber-500/30">
             <strong>Pemberitahuan Sistem:</strong> Kredensial Supabase belum terdeteksi aktif di server ini. Pastikan Environment Variables di Vercel sudah disimpan dan dilakukan <strong>Redeploy</strong>.
           </div>
         )}
 
         {error === "account_locked" && (
-          <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
+          <div className="p-3 bg-red-500/10 text-red-700 dark:text-red-400 text-xs rounded-lg border border-red-500/30">
             <strong>Akses Ditolak:</strong> Akun Anda berstatus Guest/Terkunci. Hubungi Superadmin.
           </div>
         )}
         {error === "invalid_credentials" && (
-          <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
+          <div className="p-3 bg-red-500/10 text-red-700 dark:text-red-400 text-xs rounded-lg border border-red-500/30">
             Email atau kata sandi yang Anda masukkan tidak sesuai.
           </div>
         )}
         {error === "auth_callback_failed" && (
-          <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200">
+          <div className="p-3 bg-red-500/10 text-red-700 dark:text-red-400 text-xs rounded-lg border border-red-500/30">
             Autentikasi gagal atau dibatalkan.
           </div>
         )}
         {isCustomError && (
-          <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-200 break-words">
+          <div className="p-3 bg-red-500/10 text-red-700 dark:text-red-400 text-xs rounded-lg border border-red-500/30 break-words">
             <strong>Info Autentikasi:</strong> {error}
           </div>
         )}
 
         {/* Login Email Tradisional */}
-        <form action={login} className="space-y-4 mb-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email
-            </label>
-            <input
+        <form action={login} className="space-y-4">
+          <FormField label="Email" required htmlFor="email">
+            <Input
               id="email"
               name="email"
               type="email"
               required
-              className="w-full p-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-transparent focus:ring-2 focus:ring-brand-emerald focus:outline-none"
               placeholder="nama@domain.com"
             />
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label htmlFor="password" className="block text-sm font-medium">
-                Kata Sandi
-              </label>
+          </FormField>
+
+          <FormField
+            label="Kata Sandi"
+            required
+            htmlFor="password"
+            description={
               <Link
                 href="/reset-password"
-                className="text-xs text-brand-emerald dark:text-emerald-400 hover:underline"
+                className="text-xs text-primary hover:underline float-right -mt-5"
               >
                 Lupa Password?
               </Link>
-            </div>
-            <input
+            }
+          >
+            <Input
               id="password"
               name="password"
               type="password"
               required
-              className="w-full p-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-transparent focus:ring-2 focus:ring-brand-emerald focus:outline-none"
               placeholder="••••••••"
             />
-          </div>
-          <Button type="submit" className="w-full">
+          </FormField>
+
+          <Button type="submit" variant="primary" className="w-full">
             Masuk via Email
           </Button>
         </form>
 
-        <div className="relative my-6">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+            <div className="w-full border-t border-border"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-2 bg-white dark:bg-slate-800 text-slate-500">
+            <span className="px-2 bg-surface text-muted">
               Atau masuk dengan
             </span>
           </div>
@@ -116,20 +114,22 @@ export default async function LoginPage({
         {/* Login Google dengan Client-Side PKCE */}
         <GoogleLoginButton />
 
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <p className="text-xs text-slate-500 text-center mb-3">
+        <div className="pt-4 border-t border-border">
+          <p className="text-[11px] text-muted text-center mb-2 font-semibold">
             AREA PENGEMBANGAN (DEV TESTING)
           </p>
           <form action={signupDev}>
             <Button
               type="submit"
-              className="w-full bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 text-xs"
+              variant="secondary"
+              size="sm"
+              className="w-full text-xs"
             >
               Uji Coba Daftar Akun Tamu
             </Button>
           </form>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

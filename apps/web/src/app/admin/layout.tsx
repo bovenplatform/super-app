@@ -1,4 +1,5 @@
 import { guardAdminPage } from "@/lib/rbac";
+import { Badge } from "@superapp/ui";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -10,51 +11,92 @@ export default async function AdminLayout({
   const user = await guardAdminPage();
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
-      <aside className="w-64 bg-brand-emerald text-white p-6 hidden md:flex flex-col">
-        <div className="font-bold text-xl mb-8 text-brand-gold flex items-center gap-2">
-          <span>SUPER APP</span>
+    <div className="flex min-h-screen bg-app text-main">
+      {/* Sidebar Navigation */}
+      <aside className="w-64 bg-surface border-r border-border p-6 hidden md:flex flex-col shrink-0">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-base">
+            S
+          </div>
+          <div>
+            <div className="font-extrabold text-base tracking-tight text-main">SUPER-APP</div>
+            <div className="text-[10px] font-bold text-accent uppercase tracking-wider">Command Center</div>
+          </div>
         </div>
-        <nav className="space-y-2 flex-1">
+
+        <nav className="space-y-1.5 flex-1">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted px-3 py-1">
+            Menu Utama
+          </div>
           <Link
             href="/admin"
-            className="block px-3 py-2 rounded-lg hover:bg-white/10 hover:text-brand-gold transition-colors text-sm font-medium"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-subtle text-main hover:text-primary transition-colors text-sm font-semibold"
           >
-            Dashboard
+            <span>📊</span>
+            <span>Dashboard</span>
           </Link>
           <Link
             href="/admin/berita"
-            className="block px-3 py-2 rounded-lg hover:bg-white/10 hover:text-brand-gold transition-colors text-sm font-medium"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-subtle text-main hover:text-primary transition-colors text-sm font-semibold"
           >
-            Kelola Berita
+            <span>📰</span>
+            <span>Kelola Berita</span>
+          </Link>
+
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted px-3 pt-4 py-1">
+            Sistem & Otoritas
+          </div>
+          <Link
+            href="/admin/users"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-subtle text-main hover:text-primary transition-colors text-sm font-semibold"
+          >
+            <span>👥</span>
+            <span>Manajemen User</span>
           </Link>
           <Link
             href="/akun"
-            className="block px-3 py-2 rounded-lg hover:bg-white/10 hover:text-brand-gold transition-colors text-sm font-medium text-emerald-200"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-subtle text-main hover:text-primary transition-colors text-sm font-semibold"
           >
-            Portal Akun
+            <span>👤</span>
+            <span>Portal Akun</span>
           </Link>
+
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted px-3 pt-4 py-1">
+            Navigasi Luar
+          </div>
           <Link
             href="/"
-            className="block px-3 py-2 rounded-lg hover:bg-white/10 hover:text-brand-gold transition-colors text-sm font-medium text-emerald-200"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-subtle text-muted hover:text-main transition-colors text-sm font-medium"
           >
-            Lihat Website
+            <span>🌐</span>
+            <span>Lihat Website</span>
           </Link>
         </nav>
-        <div className="mt-auto border-t border-white/20 pt-4">
-          <div className="text-sm font-medium truncate">{user.name}</div>
-          <div className="text-xs text-emerald-300 truncate mb-3">{user.email}</div>
+
+        {/* User profile footer */}
+        <div className="mt-auto border-t border-border pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-bold truncate text-main">{user.name}</div>
+            <Badge variant="brand" className="text-[10px] uppercase">
+              {user.role || "Admin"}
+            </Badge>
+          </div>
+          <div className="text-xs text-muted truncate mb-3">{user.email}</div>
           <form action="/login/logout" method="POST">
             <button
               type="submit"
-              className="text-red-300 text-sm hover:text-red-200 flex items-center gap-1 font-medium transition"
+              className="w-full text-left text-xs font-semibold text-destructive hover:underline py-1"
             >
-              Keluar
+              Keluar Sesi
             </button>
           </form>
         </div>
       </aside>
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto">{children}</main>
+
+      {/* Main Content Viewport */}
+      <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-y-auto">
+        <div className="max-w-7xl mx-auto">{children}</div>
+      </main>
     </div>
   );
 }

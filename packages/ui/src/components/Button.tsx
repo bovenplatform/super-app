@@ -3,44 +3,83 @@ import { cn } from "@superapp/utils";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link";
+  variant?: "default" | "primary" | "outline" | "secondary" | "destructive" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
+  loading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "default", size = "default", ...props }, ref) => {
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      loading = false,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const variantClasses = {
       default:
-        "bg-brand-emerald text-white shadow hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700",
+        "bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm active:scale-[0.98]",
+      primary:
+        "bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm active:scale-[0.98]",
       outline:
-        "border border-slate-300 dark:border-slate-600 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100",
+        "border border-border bg-surface hover:bg-subtle text-main active:scale-[0.98]",
       secondary:
-        "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600",
+        "bg-subtle text-main hover:bg-border/60 active:scale-[0.98]",
       destructive:
-        "bg-red-600 text-white shadow-sm hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800",
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm active:scale-[0.98]",
       ghost:
-        "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300",
-      link: "text-brand-emerald underline-offset-4 hover:underline dark:text-emerald-400 p-0 h-auto",
+        "hover:bg-subtle text-muted hover:text-main active:scale-[0.98]",
+      link: "text-primary underline-offset-4 hover:underline p-0 h-auto",
     };
 
     const sizeClasses = {
-      default: "h-9 px-4 py-2 text-sm",
+      default: "h-10 px-4 py-2 text-sm",
       sm: "h-8 rounded-md px-3 text-xs",
-      lg: "h-10 rounded-md px-6 text-base",
-      icon: "h-9 w-9 p-0",
+      lg: "h-12 rounded-lg px-6 text-base",
+      icon: "h-10 w-10 p-0",
     };
 
     return (
       <button
         ref={ref}
+        disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald disabled:pointer-events-none disabled:opacity-50 select-none",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 select-none",
           variantClasses[variant],
           sizeClasses[size],
           className
         )}
         {...props}
-      />
+      >
+        {loading && (
+          <svg
+            className="animate-spin -ml-1 mr-2 h-4 w-4 text-current"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            ></path>
+          </svg>
+        )}
+        {children}
+      </button>
     );
   }
 );

@@ -2,7 +2,15 @@ import * as React from "react";
 import { cn } from "@superapp/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "secondary" | "success" | "warning" | "destructive" | "outline";
+  variant?:
+    | "default"
+    | "brand"
+    | "secondary"
+    | "neutral"
+    | "success"
+    | "warning"
+    | "destructive"
+    | "outline";
 }
 
 /**
@@ -15,18 +23,20 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const variantClasses = {
-    default: "bg-brand-emerald text-white dark:bg-emerald-600",
-    secondary: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
-    success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    warning: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-    destructive: "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800",
-    outline: "text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700",
+    default: "bg-primary/10 text-primary border-primary/20",
+    brand: "bg-primary text-primary-foreground border-transparent",
+    secondary: "bg-subtle text-muted border-border",
+    neutral: "bg-subtle text-muted border-border",
+    success: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+    warning: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+    destructive: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
+    outline: "text-main border-border",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border border-transparent",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors border",
         variantClasses[variant],
         className
       )}
