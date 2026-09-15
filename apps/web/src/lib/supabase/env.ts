@@ -3,46 +3,64 @@
  * Mendukung standar API Key baru (sb_publishable_ / sb_secret_) dan standar lama (anon / service_role).
  */
 
+function cleanEnvValue(value?: string): string {
+  if (!value) return "";
+  let clean = value.trim();
+  // Hapus tanda petik ganda atau tunggal jika pengguna tidak sengaja menyalinnya di Dashboard Vercel
+  if (
+    (clean.startsWith('"') && clean.endsWith('"')) ||
+    (clean.startsWith("'") && clean.endsWith("'"))
+  ) {
+    clean = clean.slice(1, -1).trim();
+  }
+  return clean;
+}
+
 export function getSupabaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url || url.trim() === "") {
+  const url = cleanEnvValue(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  );
+  if (!url) {
     return "https://placeholder-project.supabase.co";
   }
-  return url.trim();
+  return url;
 }
 
 export function getSupabasePublishableKey(): string {
-  const key =
+  const key = cleanEnvValue(
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!key || key.trim() === "") {
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      process.env.SUPABASE_ANON_KEY
+  );
+  if (!key) {
     return "placeholder-anon-key";
   }
-  return key.trim();
+  return key;
 }
 
 export function getSupabaseSecretKey(): string {
-  const secret =
+  const secret = cleanEnvValue(
     process.env.SUPABASE_SECRET_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret || secret.trim() === "") {
-    return "";
-  }
-  return secret.trim();
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SERVICE_KEY
+  );
+  return secret;
 }
 
 export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = getSupabaseUrl();
+  const key = getSupabasePublishableKey();
 
   if (!url || !key) return false;
-  if (url.includes("placeholder") || url === "http://localhost:3000") {
-    // Jika di production Vercel tapi URL mengarah ke localhost
-    if (process.env.NODE_ENV === "production" && url.includes("localhost")) {
-      return false;
-    }
+  if (
+    url.includes("placeholder-project.supabase.co") ||
+    key === "placeholder-anon-key"
+  ) {
+    return false;
+  }
+  if (process.env.NODE_ENV === "production" && url.includes("localhost")) {
+    return false;
   }
   return true;
 }
