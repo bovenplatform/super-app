@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -6,64 +6,48 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Jika environment variable belum di-set di Vercel, jangan crash (hindari 500 MIDDLEWARE_INVOCATION_FAILED)
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("Middleware: NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY belum dikonfigurasi di Environment Variables.");
+    return supabaseResponse;
+  }
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request,
           });
-          supabaseResponse.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-          supabaseResponse = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          supabaseResponse.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
+    });
+
+    // Verifikasi token JWT pengguna aktif
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+
+    // PROTEKSI LAPIS 1: Cek otorisasi untuk area /admin
+    if (isAdminRoute && !user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
     }
-  );
-
-  // Verifikasi token JWT pengguna aktif
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-
-  // PROTEKSI LAPIS 1: Cek otorisasi untuk area /admin
-  if (isAdminRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  } catch (error) {
+    console.error("Error in Supabase middleware updateSession:", error);
   }
 
   return supabaseResponse;

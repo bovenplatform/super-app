@@ -1,9 +1,13 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  // Lakukan penyegaran session di setiap route yang sesuai matcher
-  return await updateSession(request);
+  try {
+    return await updateSession(request);
+  } catch (error) {
+    console.error("Middleware invocation error:", error);
+    return NextResponse.next();
+  }
 }
 
 export const config = {
