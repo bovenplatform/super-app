@@ -12,5 +12,6 @@ pnpm-debug.log*
 .env
 .vercel
 .turbo
+*.tsbuildinfo
 
 client_secret_*.json

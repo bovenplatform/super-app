@@ -1,59 +1,111 @@
 "use server";
 
+import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { LoginSchema } from "@superapp/validations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createServerSupabase } from "@/lib/supabase";
+
+interface RbacRow {
+  role: string | null;
+  is_active: boolean;
+}
 
 export async function login(formData: FormData) {
-  const supabase = await createServerSupabase();
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  if (!isSupabaseConfigured()) {
+    redirect("/login?error=config_missing");
+  }
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const rawData = {
+    email: formData.get("email"),
+    password: formData.get("password"),
+  };
 
-  if (error) {
+  const parsed = LoginSchema.safeParse(rawData);
+  if (!parsed.success) {
     redirect("/login?error=invalid_credentials");
   }
 
+  const { email, password } = parsed.data;
+  const supabase = await createServerSupabase();
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.user) {
+    redirect("/login?error=invalid_credentials");
+  }
+
+  // Cek apakah user adalah admin aktif
+  try {
+    // @ts-expect-error - RPC arg types dynamically bound
+    const { data: rbacData } = (await supabase.rpc("get_rbac_user", {
+      user_email: data.user.email ?? email,
+    })) as { data: RbacRow[] | null };
+
+    const role = rbacData && rbacData[0]?.role;
+    const isActive = rbacData && rbacData[0]?.is_active;
+
+    revalidatePath("/", "layout");
+
+    if (role && isActive) {
+      redirect("/admin");
+    }
+  } catch {
+    // Fallback
+  }
+
   revalidatePath("/", "layout");
-  redirect("/admin");
+  redirect("/akun");
 }
 
 export async function loginWithGoogle() {
+  if (!isSupabaseConfigured()) {
+    redirect("/login?error=config_missing");
+  }
+
   const supabase = await createServerSupabase();
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=/admin`,
+      redirectTo: `${origin}/auth/callback`,
     },
   });
 
-  if (data.url) {
-    redirect(data.url);
+  if (error || !data.url) {
+    redirect("/login?error=auth_callback_failed");
   }
+
+  redirect(data.url);
 }
 
 export async function signupDev() {
-  // HANYA UNTUK KEPERLUAN TES DEVELOPER
+  // HANYA UNTUK KEPERLUAN TES DEVELOPER / AUTO-GUEST
+  if (!isSupabaseConfigured()) {
+    redirect("/login?error=config_missing");
+  }
+
   const supabase = await createServerSupabase();
-  const randomNum = Math.floor(Math.random() * 1000);
-  const email = `test${randomNum}@dev.com`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const email = `tamu${randomNum}@dev.local`;
   const password = "password123";
 
-  await supabase.auth.signUp({
+  const { error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: "Tester Auto-Guest" }
-    }
+      data: { full_name: `Tamu Uji Coba #${randomNum}` },
+    },
   });
 
-  await supabase.auth.signInWithPassword({ email, password });
-  redirect("/admin");
-}
+  if (signUpError) {
+    redirect("/login?error=invalid_credentials");
+  }
 
+  await supabase.auth.signInWithPassword({ email, password });
+  revalidatePath("/", "layout");
+  redirect("/akun");
+}

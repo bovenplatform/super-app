@@ -1,22 +1,30 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "./env";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
 
-  // Jika environment variable belum di-set di Vercel, jangan crash (hindari 500 MIDDLEWARE_INVOCATION_FAILED)
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Middleware: NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY belum dikonfigurasi di Environment Variables.");
+  if (!isSupabaseConfigured()) {
+    // Jika belum dikonfigurasi dan mencoba akses admin, arahkan ke login dengan info konfigurasi
+    if (isAdminRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", "config_missing");
+      return NextResponse.redirect(url);
+    }
     return supabaseResponse;
   }
 
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabasePublishableKey();
+
   try {
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -33,21 +41,26 @@ export async function updateSession(request: NextRequest) {
       },
     });
 
-    // Verifikasi token JWT pengguna aktif
+    // Verifikasi token JWT pengguna aktif secara aman
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
 
-    const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-
     // PROTEKSI LAPIS 1: Cek otorisasi untuk area /admin
-    if (isAdminRoute && !user) {
+    if (isAdminRoute && (error || !user)) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
   } catch (error) {
     console.error("Error in Supabase middleware updateSession:", error);
+    if (isAdminRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", "session_error");
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

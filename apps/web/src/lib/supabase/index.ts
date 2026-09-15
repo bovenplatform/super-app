@@ -1,15 +1,24 @@
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@superapp/types";
+import {
+  getSupabasePublishableKey,
+  getSupabaseSecretKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "./env";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+export * from "./env";
 
 /** Singleton browser client — menghindari multiple instances di sisi client */
 let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export function getSupabaseBrowser() {
   if (!browserClient) {
-    browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+    const supabaseUrl = getSupabaseUrl();
+    const supabaseKey = getSupabasePublishableKey();
+
+    browserClient = createBrowserClient<Database>(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -20,27 +29,49 @@ export function getSupabaseBrowser() {
   return browserClient;
 }
 
+/**
+ * 1. Public Stateless Supabase Client
+ * Untuk query data publik pada SSG/ISR tanpa memicu dynamic server usage (cookies).
+ */
+export function createPublicSupabase() {
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabasePublishableKey();
+
+  return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
 /** 
- * Server client — per-request instance
- * Cocok untuk Next.js 14/15 karena cookies() kini dikelola secara asynchronous (await cookies())
+ * 2. Server Supabase Client (Cookie-based)
+ * Untuk Server Components, Route Handlers, dan Server Actions yang memerlukan sesi aktif.
  */
 export async function createServerSupabase() {
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabasePublishableKey();
+
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
-  
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
-        return cookieStore.getAll();
+        try {
+          return cookieStore.getAll();
+        } catch {
+          return [];
+        }
       },
       setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
-        // Blok try-catch untuk kasus pemanggilan pada Server Component
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           );
-        } catch (error) {
-          // Abaikan, biasanya ditangani oleh middleware
+        } catch {
+          // Mengabaikan error jika dipanggil dari Server Component murni
         }
       },
     },
@@ -48,6 +79,28 @@ export async function createServerSupabase() {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+    },
+  });
+}
+
+/**
+ * 3. Privileged Admin / Service Role Client
+ * HANYA untuk eksekusi server-side backend khusus (Bypass RLS).
+ */
+export function createAdminSupabase() {
+  const supabaseUrl = getSupabaseUrl();
+  const secretKey = getSupabaseSecretKey();
+
+  if (!secretKey) {
+    throw new Error(
+      "SUPABASE_SECRET_KEY atau SUPABASE_SERVICE_ROLE_KEY belum dikonfigurasi di Environment Variables."
+    );
+  }
+
+  return createSupabaseClient<Database>(supabaseUrl, secretKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
     },
   });
 }

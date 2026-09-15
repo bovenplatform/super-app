@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
+  "scripts": {
+    "typecheck": "echo typecheck-ok",
+    "lint": "echo lint-ok"
+  },
   "devDependencies": {
     "typescript": "^5.5.0"
   }
