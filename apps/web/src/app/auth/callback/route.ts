@@ -7,7 +7,7 @@ interface RbacRow {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const explicitNext = searchParams.get("next");
   const errorParam = searchParams.get("error");
@@ -34,8 +34,16 @@ export async function GET(request: Request) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
+        const forwardedHost = request.headers.get("x-forwarded-host");
+        const isLocalEnv = process.env.NODE_ENV === "development";
+        const redirectBase = isLocalEnv
+          ? origin
+          : forwardedHost
+          ? `https://${forwardedHost}`
+          : siteUrl;
+
         if (explicitNext) {
-          return NextResponse.redirect(`${siteUrl}${explicitNext}`);
+          return NextResponse.redirect(`${redirectBase}${explicitNext}`);
         }
 
         // Smart Auth Routing: Cek apakah user memiliki role admin
@@ -54,7 +62,7 @@ export async function GET(request: Request) {
             const isActive = rbacData && rbacData[0]?.is_active;
 
             if (role && isActive) {
-              return NextResponse.redirect(`${siteUrl}/admin`);
+              return NextResponse.redirect(`${redirectBase}/admin`);
             }
           } catch {
             // Abaikan jika RPC belum ada
@@ -62,7 +70,7 @@ export async function GET(request: Request) {
         }
 
         // Default redirect untuk Tamu/Masyarakat
-        return NextResponse.redirect(`${siteUrl}/akun`);
+        return NextResponse.redirect(`${redirectBase}/akun`);
       } else {
         console.error("Supabase exchangeCodeForSession error:", error.message);
         return NextResponse.redirect(

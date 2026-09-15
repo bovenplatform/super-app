@@ -10,7 +10,6 @@ export async function updateSession(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
 
   if (!isSupabaseConfigured()) {
-    // Jika belum dikonfigurasi dan mencoba akses admin, arahkan ke login dengan info konfigurasi
     if (isAdminRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -26,6 +25,43 @@ export async function updateSession(request: NextRequest) {
   try {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options?: any) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          supabaseResponse.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options?: any) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          supabaseResponse.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+        },
         getAll() {
           return request.cookies.getAll();
         },

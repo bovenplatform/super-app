@@ -5,7 +5,6 @@ import {
   getSupabasePublishableKey,
   getSupabaseSecretKey,
   getSupabaseUrl,
-  isSupabaseConfigured,
 } from "./env";
 
 export * from "./env";
@@ -47,7 +46,7 @@ export function createPublicSupabase() {
 
 /** 
  * 2. Server Supabase Client (Cookie-based)
- * Untuk Server Components, Route Handlers, dan Server Actions yang memerlukan sesi aktif.
+ * Mendukung format @supabase/ssr v0.3 (get/set/remove) dan v0.4+ (getAll/setAll)
  */
 export async function createServerSupabase() {
   const supabaseUrl = getSupabaseUrl();
@@ -58,6 +57,23 @@ export async function createServerSupabase() {
 
   return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
+      },
+      set(name: string, value: string, options: any) {
+        try {
+          cookieStore.set({ name, value, ...options });
+        } catch {
+          // Abaikan jika dipanggil dari Server Component
+        }
+      },
+      remove(name: string, options: any) {
+        try {
+          cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+        } catch {
+          // Abaikan jika dipanggil dari Server Component
+        }
+      },
       getAll() {
         try {
           return cookieStore.getAll();
@@ -71,7 +87,7 @@ export async function createServerSupabase() {
             cookieStore.set(name, value, options)
           );
         } catch {
-          // Mengabaikan error jika dipanggil dari Server Component murni
+          // Abaikan jika dipanggil dari Server Component
         }
       },
     },
